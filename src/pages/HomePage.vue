@@ -16,7 +16,7 @@ const { data, isLoading, isSuccess, hasNextPage, fetchNextPage } =
   >
     <RouterLink
       v-for="item in data"
-      :to="`categories/${item.id}`"
+      :to="`/categories/${item.id}`"
       :key="item.id"
     >
       <OptionCardVue :title="item.name" />

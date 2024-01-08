@@ -21,11 +21,7 @@ const isEmpty = computed(() => isSuccess.value && !data.value?.length);
     :is-success="isSuccess"
     v-on:load="fetchNextPage()"
   >
-    <RouterLink
-      v-for="item in data"
-      :to="`categories/${item.id}`"
-      :key="item.id"
-    >
+    <RouterLink v-for="item in data" :to="`/games/${item.id}`" :key="item.id">
       <OptionCardVue :title="item.name" />
     </RouterLink>
   </InfiniteListViewVue>

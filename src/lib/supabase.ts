@@ -5,8 +5,11 @@ export const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0YmZrcnNjeW1nY291bXN0dnBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg1MTc3NjIsImV4cCI6MjAxNDA5Mzc2Mn0.e-QybI0Vh89meu3HXQN3M8kWQn8b1cqmBemT7yc7Y-U"
 );
 
-export const login = () =>
-  supabase.auth.signInWithOAuth({ provider: "discord" });
+export const login = (redirectTo?: string) =>
+  supabase.auth.signInWithOAuth({
+    provider: "discord",
+    options: { redirectTo: `http://localhost:5173${redirectTo}` },
+  });
 
 export const logout = () => supabase.auth.signOut();
 
