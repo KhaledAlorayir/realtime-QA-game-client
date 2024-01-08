@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { getCategories } from "@/lib/api";
 import InfiniteListViewVue from "@/components/InfiniteListView.vue";
 import OptionCardVue from "@/components/OptionCard.vue";
+import { getQuizzesByCategoryId } from "@/lib/api";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 
+const { params } = useRoute();
+const categoryId = params.id as string;
 const { data, isLoading, isSuccess, hasNextPage, fetchNextPage } =
-  getCategories();
+  getQuizzesByCategoryId(categoryId);
+
+const isEmpty = computed(() => isSuccess.value && !data.value?.length);
 </script>
 
 <template>
   <InfiniteListViewVue
+    :is-empty="isEmpty"
     :is-loading="isLoading"
     :has-next-page="hasNextPage"
     :is-success="isSuccess"
