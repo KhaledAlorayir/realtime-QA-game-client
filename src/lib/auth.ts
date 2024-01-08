@@ -2,8 +2,8 @@ import { getUser, supabase, login } from "@/lib/supabase";
 import type { Subscription } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import { onMounted, onUnmounted } from "vue";
-import { useRoute, type NavigationGuardWithThis } from "vue-router";
-import { ProtectedRoutes } from "./ constants";
+import { useRoute, type NavigationGuardWithThis, useRouter } from "vue-router";
+import { ProtectedRoutes, RoutesNames } from "./ constants";
 
 const USE_USER_QK = ["auth"];
 
@@ -26,12 +26,16 @@ export function authListener() {
   const queryClient = useQueryClient();
   let sub: Subscription | null = null;
   const route = useRoute();
+  const router = useRouter();
 
   onMounted(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       queryClient.invalidateQueries({ queryKey: USE_USER_QK });
-      if (event === "SIGNED_OUT") {
-        console.log(route.name);
+      if (
+        event === "SIGNED_OUT" &&
+        ProtectedRoutes.includes(route.name?.toString() || "")
+      ) {
+        router.push({ name: RoutesNames.home });
       }
     });
     sub = data.subscription;
