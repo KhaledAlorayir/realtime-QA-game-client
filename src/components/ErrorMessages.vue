@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { errorMessages } from "@/lib/store";
+import { errorMessages } from "@/lib/util";
 </script>
 
 <template>

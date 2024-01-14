@@ -6,13 +6,15 @@ import {
   type InfiniteData,
   useQuery,
 } from "@tanstack/vue-query";
-import { Default } from "./ constants";
+import { Default, SERVER_ORIGIN } from "./ constants";
 import { computed, type Ref } from "vue";
 import type { ClientResponse } from "node_modules/hono/dist/types/client/types";
 import { getUser } from "./supabase";
 
-const hono = hc<AppType>("http://localhost:3000/", {
-  headers: { Authorization: `Bearer ${(await getUser())?.access_token}` },
+const hono = hc<AppType>(SERVER_ORIGIN, {
+  headers: {
+    Authorization: `Bearer ${(await getUser())?.access_token}`,
+  },
 });
 
 async function fetcher<T>(promise: Promise<ClientResponse<T>>) {
@@ -39,13 +41,12 @@ function getPaginatedQuery(page: number) {
 export function getCategories() {
   return useInfiniteQuery({
     queryKey: ["categories"],
-    queryFn: async ({ pageParam }) => {
-      return fetcher(
+    queryFn: ({ pageParam }) =>
+      fetcher(
         hono.api.categories.$get({
           query: getPaginatedQuery(pageParam),
         })
-      );
-    },
+      ),
     getNextPageParam,
     initialPageParam: 0,
     select: flattenPaginatedResponse,
@@ -72,16 +73,16 @@ export function getQuizzesByCategoryId(categoryId: string) {
 export function getQuizzesBySearch(payload: Ref<{ q: string } | undefined>) {
   return useInfiniteQuery({
     queryKey: ["quizzes", payload],
-    queryFn: async ({ pageParam }) => {
-      return fetcher(
+    queryFn: ({ pageParam }) =>
+      fetcher(
         hono.api.quizzes.$get({
           query: {
             ...getPaginatedQuery(pageParam),
             q: payload.value?.q,
           },
         })
-      );
-    },
+      ),
+
     getNextPageParam,
     initialPageParam: 0,
     select: flattenPaginatedResponse,

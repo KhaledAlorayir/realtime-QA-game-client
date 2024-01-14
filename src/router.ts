@@ -5,6 +5,7 @@ import CategoryPage from "./pages/CategoryPage.vue";
 import GamePage from "./pages/GamePage.vue";
 import { authGuard } from "./lib/auth";
 import { RoutesNames } from "./lib/ constants";
+import { errorMessages } from "./lib/util";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,5 +34,8 @@ const router = createRouter({
 });
 
 router.beforeEach(authGuard);
+router.afterEach(() => {
+  errorMessages.value = [];
+});
 
 export default router;

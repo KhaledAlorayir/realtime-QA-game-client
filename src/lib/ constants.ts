@@ -10,3 +10,5 @@ export const RoutesNames = {
 };
 
 export const ProtectedRoutes = [RoutesNames.stats, RoutesNames.games];
+
+export const SERVER_ORIGIN = "http://localhost:3000/";

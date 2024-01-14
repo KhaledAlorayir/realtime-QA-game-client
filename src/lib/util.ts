@@ -2,6 +2,8 @@ import { ref, watch, type Ref } from "vue";
 import debounce from "lodash.debounce";
 import { useRoute } from "vue-router";
 
+export const errorMessages = ref<string[]>([]);
+
 export function useDebounce(
   input: Ref<string>,
   onDebounced: (value: string) => void,
@@ -25,4 +27,8 @@ export function useQueryParams<T>() {
   );
 
   return params;
+}
+
+export function apiErrorHandler({ messages }: { messages: string[] }) {
+  errorMessages.value = messages;
 }

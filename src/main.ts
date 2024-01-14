@@ -8,18 +8,21 @@ import {
   VueQueryPlugin,
   type VueQueryPluginOptions,
 } from "@tanstack/vue-query";
-import { errorMessages } from "@/lib/store";
+import { apiErrorHandler } from "@/lib/util";
 
 const app = createApp(App);
 
 const vueQueryPluginOptions: VueQueryPluginOptions = {
   queryClientConfig: {
     queryCache: new QueryCache({
-      onError: (error) => {
-        const { messages } = error as unknown as { messages: string[] };
-        errorMessages.value = messages;
-      },
+      onError: (error) =>
+        apiErrorHandler(error as unknown as { messages: string[] }),
     }),
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
   },
 };
 
