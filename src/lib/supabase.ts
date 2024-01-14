@@ -19,6 +19,5 @@ export async function getUser() {
   if (error) {
     throw new Error(error.message);
   }
-
   return data.session;
 }

@@ -1,12 +1,19 @@
 import { hc } from "hono/client";
 import type { AppType } from "../../../qad/src/index";
 import type { PaginatedResponse } from "../../../qad/src/lib/types";
-import { useInfiniteQuery, type InfiniteData } from "@tanstack/vue-query";
+import {
+  useInfiniteQuery,
+  type InfiniteData,
+  useQuery,
+} from "@tanstack/vue-query";
 import { Default } from "./ constants";
 import { computed, type Ref } from "vue";
 import type { ClientResponse } from "node_modules/hono/dist/types/client/types";
+import { getUser } from "./supabase";
 
-const hono = hc<AppType>("http://localhost:3000/");
+const hono = hc<AppType>("http://localhost:3000/", {
+  headers: { Authorization: `Bearer ${(await getUser())?.access_token}` },
+});
 
 async function fetcher<T>(promise: Promise<ClientResponse<T>>) {
   const data = await promise;
@@ -79,5 +86,12 @@ export function getQuizzesBySearch(payload: Ref<{ q: string } | undefined>) {
     initialPageParam: 0,
     select: flattenPaginatedResponse,
     enabled: computed(() => !!payload.value?.q),
+  });
+}
+
+export function getStats() {
+  return useQuery({
+    queryKey: ["stats"],
+    queryFn: () => fetcher(hono.api.stats.$get()),
   });
 }

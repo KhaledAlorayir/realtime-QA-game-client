@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { login, logout } from "../lib/supabase";
 import QuizSearch from "@/components/QuizSearch.vue";
-import { useUser, authListener } from "@/lib/auth";
+import { useUser, authListener, useLogin, useLogout } from "@/lib/auth";
 import { useQueryParams } from "@/lib/util";
 import { getQuizzesBySearch } from "@/lib/api";
 import { computed } from "vue";
@@ -11,11 +10,21 @@ import ErrorMessagesVue from "./ErrorMessages.vue";
 
 authListener();
 const { data: auth } = useUser();
+
 const params = useQueryParams<{ q: string }>();
+
 const { data, isLoading, isSuccess, hasNextPage, fetchNextPage } =
   getQuizzesBySearch(params);
+
 const isNoSearchResults = computed(
   () => !data?.value?.length && isSuccess.value
+);
+
+const { mutate: login, isPending: isLoginPending } = useLogin();
+const { mutate: logout, isPending: isLogoutPending } = useLogout();
+
+const isAuthPending = computed(
+  () => isLoginPending.value || isLogoutPending.value
 );
 </script>
 
@@ -28,7 +37,13 @@ const isNoSearchResults = computed(
         </RouterLink>
         <QuizSearch />
       </section>
-      <button class="btn btn-secondary" v-on:click="login()" v-if="!auth">
+      <button
+        :disabled="isAuthPending"
+        class="btn btn-secondary"
+        :class="{ 'loading loading-spinner': isAuthPending }"
+        @click="login()"
+        v-if="!auth"
+      >
         discord login
       </button>
       <section class="flex items-center gap-4" v-else>
@@ -37,7 +52,14 @@ const isNoSearchResults = computed(
             <img v-bind:src="auth.image" alt="profile" />
           </div>
         </RouterLink>
-        <button class="btn btn-secondary" v-on:click="logout()">logout</button>
+        <button
+          :disabled="isAuthPending"
+          class="btn btn-secondary"
+          :class="{ 'loading loading-spinner': isAuthPending }"
+          @click="logout()"
+        >
+          logout
+        </button>
       </section>
     </header>
     <ErrorMessagesVue />

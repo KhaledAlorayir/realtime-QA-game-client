@@ -1,8 +1,13 @@
-import { getUser, supabase, login } from "@/lib/supabase";
+import { getUser, supabase, login, logout } from "@/lib/supabase";
 import type { Subscription } from "@supabase/supabase-js";
-import { useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { onMounted, onUnmounted } from "vue";
-import { useRoute, type NavigationGuardWithThis, useRouter } from "vue-router";
+import {
+  useRoute,
+  type NavigationGuardWithThis,
+  useRouter,
+  type RouteRecordName,
+} from "vue-router";
 import { ProtectedRoutes, RoutesNames } from "./ constants";
 
 const USE_USER_QK = ["auth"];
@@ -22,6 +27,18 @@ export function useUser() {
   });
 }
 
+export function useLogin() {
+  return useMutation({
+    mutationFn: () => login(),
+  });
+}
+
+export function useLogout() {
+  return useMutation({
+    mutationFn: () => logout(),
+  });
+}
+
 export function authListener() {
   const queryClient = useQueryClient();
   let sub: Subscription | null = null;
@@ -31,10 +48,7 @@ export function authListener() {
   onMounted(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       queryClient.invalidateQueries({ queryKey: USE_USER_QK });
-      if (
-        event === "SIGNED_OUT" &&
-        ProtectedRoutes.includes(route.name?.toString() || "")
-      ) {
+      if (event === "SIGNED_OUT" && isAuthenticatedRoute(route.name)) {
         router.push({ name: RoutesNames.home });
       }
     });
@@ -45,7 +59,7 @@ export function authListener() {
 }
 
 export const authGuard: NavigationGuardWithThis<undefined> = async (to) => {
-  if (to.name && ProtectedRoutes.includes(to.name.toString())) {
+  if (isAuthenticatedRoute(to.name)) {
     const isAuthenticated = !!(await getUser());
     if (isAuthenticated) return true;
     login(to.fullPath);
@@ -53,3 +67,9 @@ export const authGuard: NavigationGuardWithThis<undefined> = async (to) => {
   }
   return true;
 };
+
+function isAuthenticatedRoute(
+  name: RouteRecordName | null | undefined
+): boolean {
+  return !!(name && ProtectedRoutes.includes(name.toString()));
+}
