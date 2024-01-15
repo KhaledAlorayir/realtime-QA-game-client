@@ -5,7 +5,7 @@ defineProps<{ info: QuizJoinedBody }>();
 </script>
 
 <template>
-  <div class="w-full space-y-2 md:w-3/4 lg:space-y-0">
+  <div class="space-y-2 lg:space-y-0">
     <p class="text-center font-extrabold text-2xl text-primary">
       {{ info.quizName }}
     </p>

@@ -4,27 +4,30 @@ import type {
   ClientToServerEvents,
   QuizJoinedBody,
   SendQuestionBody,
+  GameFinishedBody,
 } from "../../../qad/src/lib/types";
 import { SERVER_ORIGIN } from "./ constants";
 import { getUser } from "./supabase";
-import { readonly, ref } from "vue";
+import { onMounted, onUnmounted, readonly, ref } from "vue";
 import { apiErrorHandler } from "./util";
 
 interface State {
   startInfo: QuizJoinedBody | null;
   showQuestions: boolean;
   question: SendQuestionBody | null;
-  currentQuestionNumber: number;
+  results: GameFinishedBody | null;
 }
 
-const initValue: State = {
-  startInfo: null,
-  question: null,
-  showQuestions: false,
-  currentQuestionNumber: 0,
-};
+function getInitValues(): State {
+  return {
+    startInfo: null,
+    question: null,
+    showQuestions: false,
+    results: null,
+  };
+}
 
-const state = ref<State>(initValue);
+const state = ref<State>(getInitValues());
 export const gameState = readonly(state);
 let showQuestionsTimeout: NodeJS.Timeout | undefined;
 
@@ -41,8 +44,7 @@ socket.on("connect", () => {
 });
 
 socket.on("disconnect", () => {
-  state.value = initValue;
-  clearTimeout(showQuestionsTimeout);
+  //navigate to reset?
   console.log("disconnected");
 });
 
@@ -54,15 +56,31 @@ socket.on("quizJoined", (payload) => {
 });
 
 socket.on("sendQuestion", (question) => {
-  state.value.currentQuestionNumber++;
   state.value.question = question;
 });
 
+socket.on("gameFinished", (paylaod) => {
+  state.value.results = paylaod;
+});
+
 socket.on("opponentLeftGame", () => {});
-socket.on("gameFinished", () => {});
+
 socket.on("playerAnswered", () => {});
 socket.on("sendCorrectAnswer", () => {});
 
 socket.on("sendError", (apiError) => {
   apiErrorHandler(apiError);
 });
+
+export function socketLifecycleHandler(quizId: string) {
+  onMounted(() => {
+    socket.connect();
+    socket.emit("joinQuiz", { quizId });
+  });
+
+  onUnmounted(() => {
+    state.value = getInitValues();
+    clearTimeout(showQuestionsTimeout);
+    socket.disconnect();
+  });
+}

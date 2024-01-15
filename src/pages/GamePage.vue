@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { socket, gameState } from "@/lib/socket";
-import { onMounted, onUnmounted } from "vue";
+import { socket, gameState, socketLifecycleHandler } from "@/lib/socket";
 import { useRoute } from "vue-router";
 import GameStartInfo from "@/components/game/GameStartInfo.vue";
+import QuestionAndAnswersHolder from "@/components/game/QuestionAndAnswersHolder.vue";
+import { useUser } from "@/lib/auth";
+import { computed } from "vue";
+import type { SendQuestionBody } from "../../../qad/src/lib/types";
 
 const { params } = useRoute();
 const quizId = params.id as string;
-
-//refactor logic to socket.ts?
-onMounted(() => {
-  socket.connect();
-  socket.emit("joinQuiz", { quizId });
-});
-
-onUnmounted(() => {
-  socket.disconnect();
-});
+socketLifecycleHandler(quizId);
+const user = useUser();
+const authIsWinner = computed(
+  () => gameState.value.results?.winnerId === user.data.value?.id
+);
 </script>
 
 <template>
@@ -30,24 +28,24 @@ onUnmounted(() => {
   </main>
   <main class="flex flex-col flex-1" v-else>
     <section class="flex flex-col flex-1 justify-center items-center">
-      <GameStartInfo
-        :info="gameState.startInfo"
-        v-if="!gameState.showQuestions"
-      />
-      <section
-        class="space-y-2"
-        v-if="gameState.showQuestions && gameState.question"
-      >
-        <p class="text-right font-semibold text-accent">
-          {{ gameState.currentQuestionNumber }} /
-          {{ gameState.startInfo.numberOfQuestions }}
-        </p>
-        <article>
-          <p class="text-center font-extrabold text-xl text-primary">
-            {{ gameState.question.content }}
-          </p>
+      <div class="w-full md:w-3/4 lg:w-2/4">
+        <article v-if="!gameState.results">
+          <GameStartInfo
+            :info="gameState.startInfo"
+            v-if="!gameState.showQuestions"
+          />
+
+          <QuestionAndAnswersHolder
+            v-if="gameState.showQuestions && gameState.question"
+            @answer="socket.emit('sendAnswer', { answerId: $event })"
+            :quiz-info="gameState.startInfo"
+            :question="(gameState.question as SendQuestionBody)"
+          />
         </article>
-      </section>
+        <article v-else>
+          <h1>{{ authIsWinner ? "you won!" : "you lost!" }}</h1>
+        </article>
+      </div>
     </section>
   </main>
 </template>
