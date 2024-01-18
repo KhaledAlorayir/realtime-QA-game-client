@@ -50,14 +50,20 @@ socket.on("quizJoined", (payload) => {
 });
 
 socket.on("sendQuestion", (question) => {
-  const timeoutPeriodInSeconds = question.isFirst
-    ? Default.SecondsBeforeStartingGame
-    : Default.SecondsBeforeShowingNextQuestion;
-
-  showQuestionTimeout = setTimeout(() => {
+  if (question.uiStatusIndicator === "PREVIOUS_NOT_ANSWERED") {
     state.value.question = question;
     state.value.correctAnswerId = null;
-  }, timeoutPeriodInSeconds * 1000);
+  } else {
+    const timeoutPeriodInSeconds =
+      question.uiStatusIndicator === "FIRST_QUESTION"
+        ? Default.SecondsBeforeStartingGame
+        : Default.SecondsBeforeShowingNextQuestion;
+
+    showQuestionTimeout = setTimeout(() => {
+      state.value.question = question;
+      state.value.correctAnswerId = null;
+    }, timeoutPeriodInSeconds * 1000);
+  }
 
   state.value.isOpponentAnsweredQuestion = false;
 });

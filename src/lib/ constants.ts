@@ -1,6 +1,6 @@
 export const Default = {
   pageSize: "20",
-  counterInSeconds: 80,
+  counterInSeconds: 10,
   SecondsBeforeShowingNextQuestion: 2,
   SecondsBeforeStartingGame: 4,
 };
