@@ -16,14 +16,6 @@ export function useUser() {
   return useQuery({
     queryKey: USE_USER_QK,
     queryFn: getUser,
-    select: (session) =>
-      session
-        ? {
-            id: session.user.id,
-            image: session.user.user_metadata.avatar_url,
-            name: session.user.user_metadata.custom_claims.global_name,
-          }
-        : null,
   });
 }
 

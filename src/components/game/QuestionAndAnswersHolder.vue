@@ -5,37 +5,48 @@ import type {
   QuizJoinedBody,
   SendQuestionBody,
 } from "../../../../qad/src/lib/types";
+import { Default } from "@/lib/ constants";
 
 const props = defineProps<{
   quizInfo: QuizJoinedBody;
   question: SendQuestionBody;
+  opponentAnswered: boolean;
+  correctAnswerId: string | null;
 }>();
 
 const emit = defineEmits<{
   (e: "answer", id: string | null): void;
 }>();
 
-const { counter, reset } = useCounter(400);
-const isAnswered = ref(false);
+const { counter, reset } = useCounter(Default.counterInSeconds, () =>
+  answerHandler(null)
+);
+const chosenAnswerId = ref<string | null>(null);
 
 watch(
   () => props.question,
   () => {
     reset();
-    isAnswered.value = false;
+    chosenAnswerId.value = null;
   }
 );
 
 function answerHandler(id: string | null) {
-  isAnswered.value = true;
-  emit("answer", id);
+  if (!chosenAnswerId.value) {
+    emit("answer", id);
+  }
+  chosenAnswerId.value = id;
 }
 </script>
 
 <template>
   <section class="space-y-8">
     <article class="space-y-2">
-      <div class="flex justify-between font-semibold">
+      <div
+        data-tip="opponent answerd ;0"
+        class="flex justify-between font-semibold"
+        :class="{ 'tooltip tooltip-open tooltip-top': opponentAnswered }"
+      >
         <p>{{ counter }}</p>
         <p class="text-accent">
           {{ question.questionNumber }} /
@@ -52,12 +63,16 @@ function answerHandler(id: string | null) {
         class="btn btn-lg btn-secondary"
         v-for="answer in question.answers"
         :key="answer.id"
-        :disabled="isAnswered"
-        :class="{ disabled: isAnswered }"
+        v-html="answer.content"
+        :disabled="!!chosenAnswerId"
+        :class="{
+          'disabled:bg-cyan-700 disabled:border-cyan-700 disabled:text-white':
+            chosenAnswerId === answer.id && !correctAnswerId,
+          'disabled:bg-emerald-600 disabled:border-emerald-500 disabled:text-white':
+            answer.id === correctAnswerId,
+        }"
         @click="answerHandler(answer.id)"
-      >
-        {{ answer.content }}
-      </button>
+      ></button>
     </article>
   </section>
 </template>

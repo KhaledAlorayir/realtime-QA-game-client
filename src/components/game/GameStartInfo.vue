@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { QuizJoinedBody } from "../../../../qad/src/lib/types";
-import GameStartPlayerCard from "./GameStartPlayerCard.vue";
+import PlayerCard from "./PlayerCard.vue";
 defineProps<{ info: QuizJoinedBody }>();
 </script>
 
@@ -10,9 +10,17 @@ defineProps<{ info: QuizJoinedBody }>();
       {{ info.quizName }}
     </p>
     <section class="flex justify-around items-center">
-      <GameStartPlayerCard :player="info.player1" />
+      <PlayerCard :player="info.player1">
+        <p class="font-semibold" v-if="info.player1.wins">
+          {{ info.player1.wins }} wins
+        </p>
+      </PlayerCard>
       <p class="font-extrabold text-2xl">VS</p>
-      <GameStartPlayerCard :player="info.player2" />
+      <PlayerCard :player="info.player2">
+        <p class="font-semibold" v-if="info.player2.wins">
+          {{ info.player2.wins }} wins
+        </p>
+      </PlayerCard>
     </section>
   </div>
 </template>

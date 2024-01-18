@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { errorMessages } from "@/lib/util";
+import { alertMessages } from "@/lib/util";
 </script>
 
 <template>
   <main class="py-8">
     <div
       role="alert"
-      class="alert alert-error"
-      v-for="msg in errorMessages"
-      :key="msg"
+      class="alert"
+      :class="{
+        'alert-info': alert.type === 'INFO',
+        'alert-error': alert.type === 'ERROR',
+      }"
+      v-for="alert in alertMessages"
+      :key="alert.message"
     >
-      <button @click="errorMessages = []">
+      <button @click="alertMessages = []">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           class="stroke-current shrink-0 h-6 w-6"
@@ -25,7 +29,7 @@ import { errorMessages } from "@/lib/util";
           />
         </svg>
       </button>
-      <span>{{ msg }}</span>
+      <span>{{ alert.message }}</span>
     </div>
   </main>
 </template>

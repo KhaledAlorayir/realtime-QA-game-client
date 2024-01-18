@@ -2,7 +2,12 @@ import { ref, watch, type Ref, onMounted, onUnmounted } from "vue";
 import debounce from "lodash.debounce";
 import { useRoute } from "vue-router";
 
-export const errorMessages = ref<string[]>([]);
+interface AlertMessage {
+  message: string;
+  type: "ERROR" | "INFO";
+}
+
+export const alertMessages = ref<AlertMessage[]>([]);
 
 export function useDebounce(
   input: Ref<string>,
@@ -29,11 +34,27 @@ export function useQueryParams<T>() {
   return params;
 }
 
-export function apiErrorHandler({ messages }: { messages: string[] }) {
-  errorMessages.value = messages;
+export function setAlertMessages(alerts: AlertMessage[], clearOld = true) {
+  if (clearOld) {
+    alertMessages.value = alerts;
+  } else {
+    alertMessages.value.push(...alerts);
+  }
 }
 
-export function useCounter(seconds: number) {
+export function setAlertMessage(alert: AlertMessage, clearOld = true) {
+  if (clearOld) {
+    alertMessages.value = [alert];
+  } else {
+    alertMessages.value.push(alert);
+  }
+}
+
+export function apiErrorHandler({ messages }: { messages: string[] }) {
+  setAlertMessages(messages.map((message) => ({ message, type: "ERROR" })));
+}
+
+export function useCounter(seconds: number, onCounterEnd: () => void) {
   const counter = ref(seconds);
   let interval: NodeJS.Timeout | null = null;
 
@@ -41,6 +62,10 @@ export function useCounter(seconds: number) {
     interval = setInterval(() => {
       if (counter.value) {
         counter.value--;
+        if (counter.value == 0) {
+          onCounterEnd();
+          destroyInterval();
+        }
       }
     }, 1000);
   }

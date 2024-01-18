@@ -6,67 +6,84 @@ import type {
   SendQuestionBody,
   GameFinishedBody,
 } from "../../../qad/src/lib/types";
-import { SERVER_ORIGIN } from "./ constants";
+import { Default, SERVER_ORIGIN } from "./ constants";
 import { getUser } from "./supabase";
 import { onMounted, onUnmounted, readonly, ref } from "vue";
-import { apiErrorHandler } from "./util";
+import { apiErrorHandler, setAlertMessage } from "./util";
 
 interface State {
   startInfo: QuizJoinedBody | null;
-  showQuestions: boolean;
   question: SendQuestionBody | null;
   results: GameFinishedBody | null;
+  isOpponentDisconnected: boolean;
+  isOpponentAnsweredQuestion: boolean;
+  correctAnswerId: string | null;
 }
 
 function getInitValues(): State {
   return {
     startInfo: null,
     question: null,
-    showQuestions: false,
     results: null,
+    isOpponentDisconnected: false,
+    isOpponentAnsweredQuestion: false,
+    correctAnswerId: null,
   };
 }
 
 const state = ref<State>(getInitValues());
 export const gameState = readonly(state);
-let showQuestionsTimeout: NodeJS.Timeout | undefined;
+
+let showQuestionTimeout: NodeJS.Timeout | undefined;
+let showResultsTimeout: NodeJS.Timeout | undefined;
 
 export const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
   SERVER_ORIGIN,
   {
-    auth: { token: (await getUser())?.access_token },
+    auth: { token: (await getUser())?.jwt },
     autoConnect: false,
   }
 );
 
-socket.on("connect", () => {
-  console.log("connected");
-});
-
-socket.on("disconnect", () => {
-  //navigate to reset?
-  console.log("disconnected");
-});
-
 socket.on("quizJoined", (payload) => {
   state.value.startInfo = payload;
-  showQuestionsTimeout = setTimeout(() => {
-    state.value.showQuestions = true;
-  }, 2000);
 });
 
 socket.on("sendQuestion", (question) => {
-  state.value.question = question;
+  const timeoutPeriodInSeconds = question.isFirst
+    ? Default.SecondsBeforeStartingGame
+    : Default.SecondsBeforeShowingNextQuestion;
+
+  showQuestionTimeout = setTimeout(() => {
+    state.value.question = question;
+    state.value.correctAnswerId = null;
+  }, timeoutPeriodInSeconds * 1000);
+
+  state.value.isOpponentAnsweredQuestion = false;
 });
 
-socket.on("gameFinished", (paylaod) => {
-  state.value.results = paylaod;
+socket.on("gameFinished", (payload) => {
+  showResultsTimeout = setTimeout(() => {
+    state.value.results = payload;
+  }, Default.SecondsBeforeShowingNextQuestion * 1000);
 });
 
-socket.on("opponentLeftGame", () => {});
+socket.on("opponentLeftGame", () => {
+  state.value.isOpponentDisconnected = true;
+  setAlertMessage({ message: "your opponent has left!", type: "INFO" });
+});
 
-socket.on("playerAnswered", () => {});
-socket.on("sendCorrectAnswer", () => {});
+socket.on("playerAnswered", async ({ playerId }) => {
+  const user = await getUser();
+
+  if (user && user.id !== playerId) {
+    state.value.isOpponentAnsweredQuestion = true;
+  }
+});
+
+socket.on("sendCorrectAnswer", ({ correctAnswerId }) => {
+  state.value.correctAnswerId = correctAnswerId;
+});
 
 socket.on("sendError", (apiError) => {
   apiErrorHandler(apiError);
@@ -80,7 +97,8 @@ export function socketLifecycleHandler(quizId: string) {
 
   onUnmounted(() => {
     state.value = getInitValues();
-    clearTimeout(showQuestionsTimeout);
+    clearTimeout(showQuestionTimeout);
+    clearTimeout(showResultsTimeout);
     socket.disconnect();
   });
 }

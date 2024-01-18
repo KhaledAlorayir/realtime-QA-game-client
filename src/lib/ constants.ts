@@ -1,5 +1,8 @@
 export const Default = {
   pageSize: "20",
+  counterInSeconds: 80,
+  SecondsBeforeShowingNextQuestion: 2,
+  SecondsBeforeStartingGame: 4,
 };
 
 export const RoutesNames = {

@@ -19,5 +19,12 @@ export async function getUser() {
   if (error) {
     throw new Error(error.message);
   }
-  return data.session;
+  return data.session
+    ? {
+        id: data.session.user.id,
+        image: data.session.user.user_metadata.avatar_url,
+        name: data.session.user.user_metadata.custom_claims.global_name,
+        jwt: data.session.access_token,
+      }
+    : null;
 }

@@ -6,7 +6,7 @@ import { getQuizzesBySearch } from "@/lib/api";
 import { computed } from "vue";
 import InfiniteListViewVue from "@/components/InfiniteListView.vue";
 import OptionCardVue from "@/components/OptionCard.vue";
-import ErrorMessagesVue from "./ErrorMessages.vue";
+import AlertMessages from "./AlertMessages.vue";
 
 authListener();
 const { data: auth } = useUser();
@@ -62,7 +62,7 @@ const isAuthPending = computed(
         </button>
       </section>
     </header>
-    <ErrorMessagesVue />
+    <AlertMessages />
     <InfiniteListViewVue
       v-if="!!params?.q?.trim().length"
       :is-empty="isNoSearchResults"
